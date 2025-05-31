@@ -1,10 +1,16 @@
 import axios from "axios";
 
+
 const api = axios.create({
   baseURL: "https://api-human-detection.pptik.id/",
 });
 
 // GET semua data dari semua halaman (misalnya 3 halaman)
+export const getDataAI = async () => {
+  const response = await api.get("/ai/data"); // <- GANTI path ini jika berbeda
+  return response.data;
+};
+
 export const getAllCameraHistory = async (totalPages = 3) => {
   let allData = [];
 

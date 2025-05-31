@@ -14,6 +14,44 @@ function App() {
   const [tab, setTab] = useState("kamera");
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(5);
+  const [aiData, setAiData] = useState([]);
+
+  const dummyAiData = [
+
+    {
+      id: 1,
+      nama: "Testing",
+      tanggal: "2025-06-01",
+      gambar: "/images/tes.jpg",
+      keletihan: 15,
+      mood: "Marah",
+    },
+
+    {
+      id: 1,
+      nama: "Asep Trisna",
+      tanggal: "2025-06-01",
+      gambar: "/images/asep.jpg",
+      keletihan: 15,
+      mood: "Sedih",
+    },
+    {
+      id: 2,
+      nama: "Iqbal Ferdana",
+      tanggal: "2025-06-01",
+      gambar: "/images/Iqbal.jpg",
+      keletihan: 5,
+      mood: "Bahagia",
+    },
+    {
+      id: 3,
+      nama: "Wawan Setiawan",
+      tanggal: "2025-06-01",
+      gambar: "/images/wawan.jpg",
+      keletihan: 42,
+      mood: "Cemas",
+    },
+  ];
 
   const fetchData = async () => {
     setLoading(true);
@@ -31,6 +69,12 @@ function App() {
   useEffect(() => {
     fetchData();
   }, [page]);
+
+  useEffect(() => {
+    if (tab === "ai") {
+      setAiData(dummyAiData);
+    }
+  }, [tab]);
 
   const handleDelete = async (id) => {
     if (!window.confirm("Yakin ingin menghapus data ini?")) return;
@@ -194,22 +238,21 @@ function App() {
 
       {tab === "kamera" && (
         <>
-          {/* Tombol Refresh */}
           <div className="flex items-center justify-between mb-4 gap-2">
-  <input
-    type="text"
-    placeholder="Cari berdasarkan guid_device"
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-    className="px-4 py-2 border rounded w-full"
-  />
-  <button
-    onClick={fetchData}
-    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded whitespace-nowrap"
-  >
-    Refresh Data
-  </button>
-</div>
+            <input
+              type="text"
+              placeholder="Cari berdasarkan guid_device"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="px-4 py-2 border rounded w-full"
+            />
+            <button
+              onClick={fetchData}
+              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded whitespace-nowrap"
+            >
+              Refresh Data
+            </button>
+          </div>
 
           {loading ? (
             <div className="text-center text-gray-500">Loading data...</div>
@@ -260,7 +303,6 @@ function App() {
             </div>
           )}
 
-          {/* Pagination */}
           <div className="flex flex-col items-center mt-6 gap-2">
             <div className="flex gap-2">
               <button
@@ -292,7 +334,6 @@ function App() {
             <p className="text-sm text-gray-500">Halaman {page} dari {totalPages}</p>
           </div>
 
-          {/* Modal Detail/Edit */}
           {selectedPhoto && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
               <div className="bg-white p-6 rounded w-full max-w-md">
@@ -334,7 +375,51 @@ function App() {
       )}
 
       {tab === "ai" && (
-        <div className="text-center text-gray-500 mt-10">Belum ada data AI.</div>
+        <div>
+          {aiData.length === 0 ? (
+            <div className="text-center text-gray-500 mt-10">Data AI belum tersedia.</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {aiData.map((item, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-3xl p-4 flex flex-col items-center shadow hover:shadow-lg transition-all"
+                >
+                  <img
+                    src={item.gambar}
+                    alt={item.nama}
+                    className="w-24 h-24 rounded-xl object-cover mb-3"
+                    onError={(e) => {
+                      e.target.src = "/images/fallback.jpg";
+                    }}
+                  />
+                  <h1 className="font-bold text-center">{item.nama}</h1>
+                  <p className="text-sm text-gray-600 mb-3">
+                    {new Date(item.tanggal).toLocaleDateString("id-ID")}
+                  </p>
+
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <span className="bg-red-600 text-white text-xs px-3 py-1 rounded">
+                      KELETIHAN
+                    </span>
+                    <span className="border text-xs px-3 py-1 rounded">
+                      {item.keletihan} %
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="bg-blue-400 text-white text-xs px-3 py-1 rounded">
+                      Suasana Hati
+                    </span>
+                    <span className="bg-yellow-200 text-xs px-3 py-1 rounded">
+                      {item.mood}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
