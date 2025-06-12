@@ -1,12 +1,3 @@
-import { useState, useEffect } from "react";
-import {
-  getDataCameraHistory,
-  deleteDataCameraHistory,
-  updateDataCameraHistory,
-} from "./api";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
 import { getAllCameraHistories } from "./ai";
 import {
   LineChart,
@@ -41,110 +32,15 @@ function App() {
   const [dataHistoriesAi, setDataHistoriesAi] = useState([])
   const [searchGrafik, setSearchGrafik] = useState("");
   const [userData, setUserData] = useState([]);
-  const [grafikFilter, setGrafikFilter] = useState([]);
-  const [detailFilter, setDetailFilter] = useState({
+  const [grafikFilter, setGrafikFilter] = useState({
   nama: '',
-  guid_device: '',
-  tanggal_hari: '',
-  bulan_tahun: ''
+  tanggal: '',
+  bulan: ''
   });
   const combinedDashboardData = [
   ...data,
   ...dataHistoriesAi.filter(itemAi => !data.some(item => item.id === itemAi.id))
 ];
-
-const prepareUserChartData = (userGuid) => {
-  // Filter data berdasarkan user yang dipilih dan 1 bulan terakhir
-  const oneMonthAgo = new Date();
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  
-  const filteredData = dataHistoriesAi.filter(item => {
-    return item.guid_device === userGuid && 
-           new Date(item.datetime) >= oneMonthAgo;
-  });
-
-  // Siapkan data keletihan per hari
-  const fatigueData = filteredData.reduce((acc, curr) => {
-    const date = curr.datetime?.slice(0, 10);
-    if (!acc[date]) {
-      acc[date] = {
-        date,
-        totalFatigue: 0,
-        count: 0
-      };
-    }
-    acc[date].totalFatigue += parseFloat(curr.keletihan) || 0;
-    acc[date].count += 1;
-    return acc;
-  }, {});
-
-  const fatigueChartData = Object.values(fatigueData).map(item => ({
-    date: item.date,
-    keletihan: item.count > 0 ? (item.totalFatigue / item.count).toFixed(1) : 0
-  }));
-
-  // Siapkan data mood per hari
-  const moodData = filteredData.reduce((acc, curr) => {
-    const date = curr.datetime?.slice(0, 10);
-    const mood = (curr.mood || "Tidak Terdeteksi").toLowerCase();
-    
-    if (!acc[date]) {
-      acc[date] = {
-        date,
-        moods: {
-          bahagia: 0,
-          sedih: 0,
-          marah: 0,
-          netral: 0,
-          lainnya: 0
-        }
-      };
-    }
-    
-    if (mood.includes("senang") || mood.includes("bahagia")) {
-      acc[date].moods.bahagia += 1;
-    } else if (mood.includes("sedih")) {
-      acc[date].moods.sedih += 1;
-    } else if (mood.includes("marah")) {
-      acc[date].moods.marah += 1;
-    } else if (mood.includes("netral")) {
-      acc[date].moods.netral += 1;
-    } else {
-      acc[date].moods.lainnya += 1;
-    }
-    
-    return acc;
-  }, {});
-
-  const moodChartData = Object.values(moodData).map(item => ({
-    date: item.date,
-    ...item.moods
-  }));
-
-  return { fatigueChartData, moodChartData };
-};
-
-const getFilteredDetailData = () => {
-  return dataHistoriesAi.filter(item => {
-    const isSelectedUser = item.guid_device === selectedPhoto?.guid_device;
-    const namaMatch = !detailFilter.nama || 
-      (item.nama && item.nama.toLowerCase().includes(detailFilter.nama.toLowerCase()));
-    const guidMatch = !detailFilter.guid_device || 
-      item.guid_device?.includes(detailFilter.guid_device);
-    
-    // Ekstrak bagian tanggal dari datetime (format DD-MM-YYYY)
-    const [day, month, year] = item.datetime?.split('-') || [];
-    
-    // Filter berdasarkan hari (DD)
-    const hariMatch = !detailFilter.tanggal_hari || day === detailFilter.tanggal_hari;
-    
-    // Filter berdasarkan bulan & tahun (YYYY-MM)
-    const bulanTahunMatch = !detailFilter.bulan_tahun || 
-      `${year}-${month}` === detailFilter.bulan_tahun;
-    
-    return isSelectedUser && namaMatch && guidMatch && hariMatch && bulanTahunMatch;
-  });
-};
 
   const handleGrafikFilterChange = (e) => {
   const { name, value } = e.target;
@@ -157,7 +53,6 @@ const getFilteredDetailData = () => {
 const resetGrafikFilter = () => {
   setGrafikFilter({
     nama: '',
-    guid_device: '',
     tanggal: '',
     bulan: ''
   });
@@ -384,116 +279,7 @@ const grafikMood = Object.entries(
 
 
   return (
-    // <div style={{ padding: "2rem", minHeight: "100vh" }}>
-    //   <h1 style={{ textAlign: "center", fontSize: "2rem", marginBottom: "2rem" }}>
-    //     Galeri Foto
-    //   </h1>
 
-    //   <div
-    //     style={{
-    //       display: "grid",
-    //       gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-    //       gap: "1.5rem",
-    //     }}
-    //   >
-    //     {photos.map((photo, index) => (
-    //       <div
-    //         key={index}
-    //         style={{
-    //           backgroundColor: "#fff",
-    //           padding: "1rem",
-    //           borderRadius: "0.75rem",
-    //           boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-    //           textAlign: "center",
-    //         }}
-    //       >
-    //         <img
-    //           src={`/images/${photo.fileName}`}
-    //           alt={photo.fileName}
-    //           onClick={() => setSelectedPhoto(photo)}
-    //           style={{
-    //             width: "100%",
-    //             aspectRatio: "1 / 1",
-    //             objectFit: "cover",
-    //             borderRadius: "0.5rem",
-    //             marginBottom: "0.75rem",
-    //             cursor: "pointer",
-    //             transition: "transform 0.3s",
-    //           }}
-    //           onMouseEnter={(e) =>
-    //             (e.currentTarget.style.transform = "scale(1.05)")
-    //           }
-    //           onMouseLeave={(e) =>
-    //             (e.currentTarget.style.transform = "scale(1)")
-    //           }
-    //         />
-    //         <p style={{ fontWeight: "bold", margin: "0.25rem 0" }}>
-    //           {photo.fileName}
-    //         </p>
-    //         <p style={{ color: "#555", margin: 0 }}>{photo.formatted}</p>
-    //       </div>
-    //     ))}
-    //   </div>
-
-    //   {selectedPhoto && (
-    //     <div
-    //       onClick={() => setSelectedPhoto(null)}
-    //       style={{
-    //         position: "fixed",
-    //         top: 0,
-    //         left: 0,
-    //         width: "100vw",
-    //         height: "100vh",
-    //         backgroundColor: "rgba(0,0,0,0.7)",
-    //         display: "flex",
-    //         justifyContent: "center",
-    //         alignItems: "center",
-    //         zIndex: 1000,
-    //       }}
-    //     >
-    //       <div
-    //         onClick={(e) => e.stopPropagation()}
-    //         style={{
-    //           backgroundColor: "#fff",
-    //           padding: "1rem",
-    //           borderRadius: "0.5rem",
-    //           textAlign: "center",
-    //           maxWidth: "90vw",
-    //           maxHeight: "90vh",
-    //           overflow: "auto",
-    //         }}
-    //       >
-    //         <img
-    //           src={`/images/${selectedPhoto.fileName}`}
-    //           alt={selectedPhoto.fileName}
-    //           style={{
-    //             width: "100%",
-    //             maxWidth: "500px",
-    //             borderRadius: "0.5rem",
-    //             marginBottom: "1rem",
-    //           }}
-    //         />
-    //         <p style={{ fontWeight: "bold" }}>{selectedPhoto.fileName}</p>
-    //         <p style={{ color: "#555" }}>{selectedPhoto.formatted}</p>
-    //         <a
-    //           href={`/images/${selectedPhoto.fileName}`}
-    //           download
-    //           style={{
-    //             display: "inline-block",
-    //             marginTop: "0.5rem",
-    //             backgroundColor: "#007bff",
-    //             color: "#fff",
-    //             padding: "0.5rem 1rem",
-    //             borderRadius: "0.3rem",
-    //             textDecoration: "none",
-    //           }}
-    //         >
-    //           ⬇️ Download
-    //         </a>
-    //       </div>
-    //     </div>
-    //   )}
-    // </div>
     <div className="p-4">
           {/* Notifikasi */}
           {(message || error) && (
@@ -637,7 +423,6 @@ const grafikMood = Object.entries(
           </div>
         )}
     
-    
               {/* Navigasi Dashboard */}
               <div className="flex flex-col items-center mt-6 gap-2">
           <div className="flex gap-2">
@@ -749,125 +534,53 @@ const grafikMood = Object.entries(
     
             {/* Modal Detail User */}
             {selectedUser && tab === "dashboardUser" && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div className="bg-white p-6 rounded w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-      <h2 className="text-2xl font-bold mb-4">Detail User</h2>
-      
-      <div className="flex flex-col md:flex-row gap-6 mb-6">
-        {/* Info User */}
-        <div className="flex flex-col items-center md:w-1/3">
-          {selectedUser.photo ? (
-            <img 
-              src={selectedUser.photo} 
-              alt={selectedUser.name} 
-              className="w-32 h-32 rounded-full object-cover mb-4"
-              onError={(e) => {
-                e.target.onerror = null; 
-                e.target.src = 'https://via.placeholder.com/150';
-              }}
-            />
-          ) : (
-            <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mb-4">
-              <span>No Photo</span>
-            </div>
-          )}
-          <h3 className="text-lg font-semibold">{selectedUser.name}</h3>
-          <p className="text-sm text-gray-500">{selectedUser.position || '-'}</p>
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                <div className="bg-white p-6 rounded w-full max-w-md max-h-[90vh] overflow-y-auto">
+                  <h2 className="text-xl font-bold mb-4">Detail User</h2>
           
-          <div className="mt-4 w-full">
-            <DetailItem label="Profesi" value={selectedUser.profession} />
-            <DetailItem label="Email" value={selectedUser.email} />
-            <DetailItem label="No. Telp" value={selectedUser.phoneNumber} />
-            <DetailItem label="Unit" value={selectedUser.unit} />
-            <DetailItem label="Status" value={selectedUser.isDeleted ? "Non-Aktif" : "Aktif"} />
-          </div>
-        </div>
-        
-        {/* Grafik */}
-        <div className="md:w-2/3">
-          <h3 className="text-xl font-semibold mb-4">Analisis 1 Bulan Terakhir</h3>
-          
-          {/* Dapatkan data grafik untuk user ini */}
-          {(() => {
-            const { fatigueChartData, moodChartData } = prepareUserChartData(selectedUser.guid);
-            
-            return (
-              <>
-                {/* Grafik Keletihan */}
-                <div className="mb-8">
-                  <h4 className="font-medium mb-2">Rata-rata Keletihan Harian</h4>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={fatigueChartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="date" 
-                          tickFormatter={(value) => value.slice(8, 10)} // Hanya tampilkan tanggal
-                        />
-                        <YAxis domain={[0, 100]} />
-                        <Tooltip 
-                          formatter={(value) => [`${value}%`, "Keletihan"]}
-                          labelFormatter={(date) => `Tanggal: ${date}`}
-                        />
-                        <Legend />
-                        <Line 
-                          type="monotone" 
-                          dataKey="keletihan" 
-                          stroke="#8884d8" 
-                          name="Keletihan (%)"
-                          strokeWidth={2}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                  <div className="flex flex-col items-center mb-4">
+                    {selectedUser.photo ? (
+                      <img 
+                        src={selectedUser.photo} 
+                        alt={selectedUser.name} 
+                        className="w-32 h-32 rounded-full object-cover mb-2"
+                        onError={(e) => {
+                          e.target.onerror = null; 
+                          e.target.src = 'https://via.placeholder.com/150';
+                        }}
+                      />
+                    ) : (
+                      <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center mb-2">
+                        <span>No Photo</span>
+                      </div>
+                    )}
+                    <h3 className="text-lg font-semibold">{selectedUser.name}</h3>
+                    <p className="text-sm text-gray-500">{selectedUser.position || '-'}</p>
+                  </div>
+    
+                  <div className="grid grid-cols-1 gap-3">
+                    <DetailItem label="Profesi" value={selectedUser.profession} />
+                    <DetailItem label="Email" value={selectedUser.email} />
+                    <DetailItem label="No. Telp" value={selectedUser.phoneNumber} />
+                    <DetailItem label="Unit" value={selectedUser.unit} />
+                    <DetailItem label="Alamat" value={selectedUser.address} />
+                    <DetailItem label="Status" value={selectedUser.isDeleted ? "Non-Aktif" : "Aktif"} />
+                    <DetailItem label="Tanggal Lahir" value={selectedUser.birthDate} />
+                    <DetailItem label="Tanggal Bergabung" value={selectedUser.createdAt || '-'} />
+                    <DetailItem label="GUID" value={selectedUser.guid} />
+                  </div>
+    
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={() => setSelectedUser(null)}
+                      className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                    >
+                      Tutup
+                    </button>
                   </div>
                 </div>
-                
-                {/* Grafik Mood */}
-                <div>
-                  <h4 className="font-medium mb-2">Distribusi Suasana Hati</h4>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={moodChartData}
-                        stackOffset="expand"
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="date" 
-                          tickFormatter={(value) => value.slice(8, 10)} // Hanya tampilkan tanggal
-                        />
-                        <YAxis />
-                        <Tooltip 
-                          formatter={(value, name) => [`${Math.round(value * 100)}%`, name]}
-                          labelFormatter={(date) => `Tanggal: ${date}`}
-                        />
-                        <Legend />
-                        <Bar dataKey="bahagia" stackId="a" fill="#22c55e" name="Bahagia" />
-                        <Bar dataKey="netral" stackId="a" fill="#3b82f6" name="Netral" />
-                        <Bar dataKey="sedih" stackId="a" fill="#facc15" name="Sedih" />
-                        <Bar dataKey="marah" stackId="a" fill="#ef4444" name="Marah" />
-                        <Bar dataKey="lainnya" stackId="a" fill="#9ca3af" name="Lainnya" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </>
-            );
-          })()}
-        </div>
-      </div>
-      
-      <div className="flex justify-end mt-4">
-        <button
-          onClick={() => setSelectedUser(null)}
-          className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-        >
-          Tutup
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+              </div>
+            )}
     
           {/* // Tab Data AI // */}
           {tab === "ai" && (
@@ -1124,149 +837,52 @@ const grafikMood = Object.entries(
           <h2 className="text-xl font-bold mb-4">Detail Grafik - {selectedPhoto.nama || selectedPhoto.guid_device}</h2>
     
           {/* Filter Section */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            {/* Filter Nama */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium mb-1">Nama</label>
               <input
                 type="text"
                 name="nama"
-                value={detailFilter.nama}
-                onChange={(e) => setDetailFilter({...detailFilter, nama: e.target.value})}
+                value={grafikFilter.nama}
+                onChange={handleGrafikFilterChange}
                 placeholder="Filter nama..."
                 className="w-full px-3 py-2 border rounded"
               />
             </div>
-    
-            {/* Filter GUID Device */}
             <div>
-              <label className="block text-sm font-medium mb-1">GUID Device</label>
+              <label className="block text-sm font-medium mb-1">Tanggal (YYYY-MM-DD)</label>
               <input
-                type="text"
-                name="guid_device"
-                value={detailFilter.guid_device}
-                onChange={(e) => setDetailFilter({...detailFilter, guid_device: e.target.value})}
-                placeholder="Filter GUID..."
+                type="date"
+                name="tanggal"
+                value={grafikFilter.tanggal}
+                onChange={handleGrafikFilterChange}
                 className="w-full px-3 py-2 border rounded"
               />
             </div>
-    
-            {/* Filter Tanggal (Hari) */}
             <div>
-              <label className="block text-sm font-medium mb-1">Tanggal / Hari (DD)</label>
-              <select
-                name="tanggal_hari"
-                value={detailFilter.tanggal_hari}
-                onChange={(e) => setDetailFilter({...detailFilter, tanggal_hari: e.target.value})}
-                className="w-full px-3 py-2 border rounded"
-              >
-                <option value="">Semua Hari</option>
-                {Array.from({length: 31}, (_, i) => {
-                  const day = (i + 1).toString().padStart(2, '0');
-                  return <option key={day} value={day}>{day}</option>;
-                })}
-              </select>
-            </div>
-    
-            {/* Filter Bulan & Tahun */}
-            <div>
-              <label className="block text-sm font-medium mb-1">Bulan & Tahun</label>
+              <label className="block text-sm font-medium mb-1">Bulan (YYYY-MM)</label>
               <input
                 type="month"
-                name="bulan_tahun"
-                value={detailFilter.bulan_tahun}
-                onChange={(e) => setDetailFilter({...detailFilter, bulan_tahun: e.target.value})}
+                name="bulan"
+                value={grafikFilter.bulan}
+                onChange={handleGrafikFilterChange}
                 className="w-full px-3 py-2 border rounded"
               />
             </div>
           </div>
     
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex gap-2 mb-4">
             <button
-              onClick={() => setDetailFilter({
-                nama: '',
-                guid_device: '',
-                tanggal: '',
-                bulan: ''
-              })}
+              onClick={resetGrafikFilter}
               className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
             >
               Reset Filter
             </button>
-            <div className="text-sm text-gray-500">
-              Menampilkan data 1 bulan terakhir
+            <div className="ml-auto text-sm text-gray-500">
+              {keletihanData.length} data ditemukan
             </div>
           </div>
-    
-              {/* Tambahkan setelah section filter dan sebelum tabel */}
-              <div className="mb-4 p-3 bg-blue-50 rounded text-sm">
-                {detailFilter.tanggal_hari && (
-                  <span className="inline-block mr-3">
-                    Hari: <strong>{detailFilter.tanggal_hari}</strong>
-                  </span>
-                )}
-                {detailFilter.bulan_tahun && (
-                  <span className="inline-block mr-3">
-                    Periode: <strong>{detailFilter.bulan_tahun}</strong>
-                  </span>
-                )}
-                {(!detailFilter.tanggal_hari && !detailFilter.bulan_tahun) && (
-                  <span>Menampilkan semua tanggal</span>
-                )}
-              </div>
-    
-          {/* Tabel Data */}
-          <div className="overflow-x-auto">
-            <table className="w-full table-auto border border-gray-300">
-              <thead>
-                <tr className="bg-gray-100 text-left">
-                  <th className="p-2 border">Tanggal</th>
-                  <th className="p-2 border">Nama</th>
-                  <th className="p-2 border">GUID Device</th>
-                  <th className="p-2 border">Keletihan</th>
-                  <th className="p-2 border">Suasana Hati</th>
-                  <th className="p-2 border">Gambar</th>
-                </tr>
-              </thead>
-              <tbody>
-                {getFilteredDetailData().length > 0 ? (
-                  getFilteredDetailData().map((item, index) => (
-                    <tr key={index} className="border-t hover:bg-gray-50">
-                      <td className="p-2 border">{item.datetime?.slice(0, 10)}</td>
-                      <td className="p-2 border">{item.nama || '-'}</td>
-                      <td className="p-2 border">{item.guid_device}</td>
-                      <td className="p-2 border">{item.keletihan || '-'}%</td>
-                      <td className="p-2 border">
-      <span className={`px-2 py-1 rounded text-xs text-white ${
-        item.mood === 'Bahagia' || item.mood === 'bahagia' ? 'bg-green-500' :
-        item.mood === 'Sedih' || item.mood === 'sedih' ? 'bg-yellow-500' :
-        item.mood === 'Marah' || item.mood === 'marah' ? 'bg-red-500' :
-        item.mood === 'Netral' || item.mood === 'netral' ? 'bg-blue-500' : 
-        'bg-gray-500'
-      }`}>
-        {item.mood || '-'}
-      </span>
-    </td>
-                      <td className="p-2 border">
-                        <img 
-                          src={`https://monja-file.pptik.id/v1/view?path=presensi/${item.gambar}`} 
-                          alt="Preview" 
-                          className="w-16 h-16 object-cover cursor-pointer"
-                          onClick={() => window.open(`https://monja-file.pptik.id/v1/view?path=presensi/${item.gambar}`, '_blank')}
-                        />
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6" className="p-4 text-center text-gray-500">
-                      Tidak ada data yang sesuai dengan filter
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+            
     
           {/* Informasi Karyawan */}
           <div className="mb-6 p-4 bg-gray-50 rounded">
@@ -1279,77 +895,71 @@ const grafikMood = Object.entries(
             </div>
           </div>
     
-                {/* Grafik */}
-          <h3 className="text-lg font-semibold mt-8 mb-4">Visualisasi Data</h3>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Grafik Keletihan */}
-            <div className="bg-white p-4 rounded border">
-              <h4 className="font-medium mb-2">Presentase Keletihan</h4>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={getFilteredDetailData()}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="datetime" tickFormatter={(value) => value.slice(0, 10)} />
-                    <YAxis domain={[0, 100]} />
-                    <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="keletihan" 
-                      stroke="#8884d8" 
-                      name="Keletihan (%)"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+                {/* Grafik Keletihan*/}
+                <h3 className="text-lg font-semibold mb-2">Grafik Tingkat Keletihan</h3>
+          {keletihanData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart
+                data={keletihanData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="tanggal" />
+                <YAxis domain={[0, 100]} label={{ value: 'Persentase', angle: -90, position: 'insideLeft' }} />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="keletihan"
+                  stroke="#8884d8"
+                  activeDot={{ r: 8 }}
+                  name="Keletihan (%)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-8 bg-gray-50 rounded">
+              <p className="text-gray-500">Tidak ada data keletihan untuk filter yang dipilih</p>
             </div>
+          )}
     
-            {/* Grafik Mood */}
-            <div className="bg-white p-4 rounded border">
-              <h4 className="font-medium mb-2">Suasana Hati / Mood</h4>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={Object.entries(
-                    getFilteredDetailData().reduce((acc, curr) => {
-                      const mood = curr.mood || 'Tidak Terdeteksi';
-                      acc[mood] = (acc[mood] || 0) + 1;
-                      return acc;
-                    }, {})
-                  ).map(([mood, count]) => ({ mood, count }))}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="mood" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" name="Jumlah">
-      {Object.entries(
-        getFilteredDetailData().reduce((acc, curr) => {
-          const mood = curr.mood ? curr.mood.charAt(0).toUpperCase() + curr.mood.slice(1).toLowerCase() : 'Tidak Terdeteksi';
-          acc[mood] = (acc[mood] || 0) + 1;
-          return acc;
-        }, {})
-      ).map(([mood, _], index) => (
-        <Cell 
-          key={`cell-${index}`}
-          fill={
-            mood === 'Bahagia' ? '#22c55e' :
-            mood === 'Sedih' ? '#facc15' :
-            mood === 'Marah' ? '#ef4444' :
-            mood === 'Netral' ? '#3b82f6' : 
-            '#9ca3af'
-          }
-        />
-      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+                {/* Grafik Suasana Hati*/}
+                <h3 className="text-lg font-semibold mt-8 mb-2">Distribusi Suasana Hati</h3>
+          {moodData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={moodData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mood" />
+                <YAxis label={{ value: 'Mood', angle: -90, position: 'insideLeft' }} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="count" name="Grafik Suasana Hati">
+                  {moodData.map((entry, index) => {
+                    let fillColor = "#8884d8";
+                    const mood = entry.mood?.toLowerCase();
+                    if (mood === "bahagia") fillColor = "#22c55e";
+                    else if (mood === "marah") fillColor = "#ef4444";
+                    else if (mood === "sedih") fillColor = "#facc15";
+                    else if (mood === "netral") fillColor = "#3b82f6";
+                    return <Cell key={`cell-${index}`} fill={fillColor} />;
+                  })}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="text-center py-8 bg-gray-50 rounded">
+              <p className="text-gray-500">Tidak ada data suasana hati untuk filter yang dipilih</p>
             </div>
-          </div>
-    
-          {/* Tombol Tutup */}
-          <div className="flex justify-end mt-6">
+          )}
+                
+                {/* Tombol Tutup*/}
+                <div className="flex justify-end gap-2 mt-6">
             <button
               onClick={() => setSelectedPhoto(null)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
             >
               Tutup
             </button>
