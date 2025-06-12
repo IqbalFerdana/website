@@ -1,11 +1,11 @@
 import axios from "axios";
 
 const api = axios.create({
-   baseURL: "https://api-human-detection.pptik.id/ai/data",
+   baseURL: "https://api-human-detection.pptik.id/",
 })
 
 const apiLocal = axios.create({
-   baseURL: "http://localhost:4000",
+   baseURL: "https://api-human-detection.pptik.id/",
 })
 
 // GET semua data dari semua halaman (misal 5 halaman)
