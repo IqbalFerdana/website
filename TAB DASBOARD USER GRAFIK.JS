@@ -166,7 +166,7 @@ function App() {
   };
 
   const getFilteredDetailData = () => {
-    return combinedDashboardData.filter(item => {
+    return dataHistoriesAi.filter(item => {
       const isSelectedUser = item.guid_device === selectedPhoto?.guid_device;
       const namaMatch = !detailFilter.nama || 
         (item.nama && item.nama.toLowerCase().includes(detailFilter.nama.toLowerCase()));
@@ -205,7 +205,7 @@ function App() {
   };
 
   const getFilteredGrafikData = () => {
-    return combinedDashboardData.filter(item => {
+    return dataHistoriesAi.filter(item => {
       // Filter utama berdasarkan karyawan yang dipilih
       const isSelectedUser = item.guid_device === selectedPhoto?.guid_device;
       
@@ -505,7 +505,7 @@ function App() {
     dashboardPage * itemsPerPage
   );
 
-  const grafikData = combinedDashboardData
+  const grafikData = dataHistoriesAi
     .filter(item =>
       item.guid_device === selectedPhoto?.guid_device && // Filter berdasarkan guid_device yang dipilih
       (
@@ -521,7 +521,7 @@ function App() {
     }));
 
   const grafikMood = Object.entries(
-    combinedDashboardData
+    dataHistoriesAi
       .filter(item =>
         item.guid_device === selectedPhoto?.guid_device && // Filter berdasarkan guid_device yang dipilih
         (
@@ -529,7 +529,6 @@ function App() {
           item.datetime?.slice(0, 10).includes(searchGrafik) ||
           item.datetime?.slice(0, 7).includes(searchGrafik)
         )
-      )
       .reduce((acc, curr) => {
         let mood = (curr.mood || "").toLowerCase();
         if (mood === "senang") mood = "bahagia";
@@ -537,7 +536,7 @@ function App() {
         acc[mood] = (acc[mood] || 0) + 1;
         return acc;
       }, {})
-  ).map(([mood, count]) => ({ mood, count }));
+  ).map(([mood, count]) => ({ mood, count })));
 
   return (
     <div className="p-4">
@@ -1188,7 +1187,7 @@ function App() {
       )}
 
       {/* Modal Detail Dashboard*/}
-      {selectedPhoto && (tab === "dashboard" || tab === "ai") && (
+      {selectedPhoto && tab === "dashboard" && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Detail Grafik - {selectedPhoto.nama || selectedPhoto.guid_device}</h2>
