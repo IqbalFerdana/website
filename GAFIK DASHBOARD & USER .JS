@@ -24,7 +24,7 @@ import {
   Pie,
 } from "recharts";
 
-// Dummy AI data (if needed)
+// Data AI tiruan (jika diperlukan)
 const dummyAiData = [];
 
 function App() {
@@ -60,7 +60,7 @@ function App() {
     ...dataHistoriesAi.filter(itemAi => !data.some(item => item.id === itemAi.id))
   ];
 
-  // Prepare profiling chart data
+  // Data Grafik Data Profiling (Dummy)
   const prepareProfilingChartData = () => {
     return profilingData.map(item => ({
       date: item.date,
@@ -72,11 +72,11 @@ function App() {
     }));
   };
 
-  // Prepare mood distribution data for pie chart
+  // Menyiapkan Data Diagram Lingkaran Untuk Suasana Hati 
   const prepareMoodDistributionData = () => {
     if (profilingData.length === 0) return [];
 
-    // Calculate average mood percentages
+    // Hitung Presentase Suasana Hati ( Rata - Rata )
     const totalDays = profilingData.length;
     const averageMoods = profilingData.reduce((acc, curr) => {
       acc.bahagia += parseFloat(curr.bahagia) || 0;
@@ -95,7 +95,7 @@ function App() {
   };
 
   const prepareUserChartData = (userGuid) => {
-    // Filter data berdasarkan user yang dipilih dan 1 bulan terakhir
+    // Filter Data Berdasarkan User Yang Dipilih Selama 1 Bulan Terakhir
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
     
@@ -104,7 +104,7 @@ function App() {
              new Date(item.datetime) >= oneMonthAgo;
     });
 
-    // Siapkan data keletihan per hari
+    // Siapkan Data Keletihan Per Hari
     const fatigueData = filteredData.reduce((acc, curr) => {
       const date = curr.datetime?.slice(0, 10);
       if (!acc[date]) {
@@ -124,7 +124,7 @@ function App() {
       keletihan: item.count > 0 ? (item.totalFatigue / item.count).toFixed(1) : 0
     }));
 
-    // Siapkan data mood per hari
+    // Siapkan Data Mood Per Hari
     const moodData = filteredData.reduce((acc, curr) => {
       const date = curr.datetime?.slice(0, 10);
       const mood = (curr.mood || "Tidak Terdeteksi").toLowerCase();
@@ -166,20 +166,20 @@ function App() {
   };
 
   const getFilteredDetailData = () => {
-    return dataHistoriesAi.filter(item => {
+    return combinedDashboardData.filter(item => {
       const isSelectedUser = item.guid_device === selectedPhoto?.guid_device;
       const namaMatch = !detailFilter.nama || 
         (item.nama && item.nama.toLowerCase().includes(detailFilter.nama.toLowerCase()));
       const guidMatch = !detailFilter.guid_device || 
         item.guid_device?.includes(detailFilter.guid_device);
       
-      // Ekstrak bagian tanggal dari datetime (format DD-MM-YYYY)
+      // Ekstrak Bagian Tanggal dari DateTime (format DD-MM-YYYY)
       const [day, month, year] = item.datetime?.split('-') || [];
       
-      // Filter berdasarkan hari (DD)
+      // Filter Berdasarkan Hari (DD)
       const hariMatch = !detailFilter.tanggal_hari || day === detailFilter.tanggal_hari;
       
-      // Filter berdasarkan bulan & tahun (YYYY-MM)
+      // Filter Berdasarkan Bulan & Tahun (YYYY-MM)
       const bulanTahunMatch = !detailFilter.bulan_tahun || 
         `${year}-${month}` === detailFilter.bulan_tahun;
       
@@ -205,11 +205,11 @@ function App() {
   };
 
   const getFilteredGrafikData = () => {
-    return dataHistoriesAi.filter(item => {
-      // Filter utama berdasarkan karyawan yang dipilih
+    return combinedDashboardData.filter(item => {
+      // Filter Utama Berdasarkan Karyawan Yang Dipilih
       const isSelectedUser = item.guid_device === selectedPhoto?.guid_device;
       
-      // Filter berdasarkan input pengguna
+      // Filter Berdasarkan Input Pengguna
       const namaMatch = !grafikFilter.nama || 
         (item.nama && item.nama.toLowerCase().includes(grafikFilter.nama.toLowerCase()));
       
@@ -226,13 +226,13 @@ function App() {
   const prepareGrafikData = () => {
     const filteredData = getFilteredGrafikData();
     
-    // Data untuk grafik keletihan
+    // Data Untuk Grafik Keletihan
     const keletihanData = filteredData.map(item => ({
       tanggal: item.datetime?.slice(0, 10),
       keletihan: item.keletihan
     }));
 
-    // Data untuk grafik mood
+    // Data Untuk Grafik Mood
     const moodData = Object.entries(
       filteredData.reduce((acc, curr) => {
         let mood = (curr.mood || "").toLowerCase();
@@ -281,22 +281,22 @@ function App() {
   const handleRefreshAi = async () => {
     try {
       await getDataHistoriesAi();
-      setPage(1); // reset halaman ke awal
-      await getDataHistoriesAi(); // Ambil data terbaru dari server
+      setPage(1); // Reset Halaman Ke Awal
+      await getDataHistoriesAi(); // Ambil Data Terbaru Dari Server
     } catch (error) {
       console.error("Gagal refresh:", error);
     }
   };
 
-  // Load profiling data
+  // Memuat Data Pembuatan Profil
   useEffect(() => {
-    // In a real app, you would fetch this from an API
-    // For now, we'll use the imported dummy data
+    // Dalam Aplikasi Nyata, Anda Akan Mengambil ini Dari API
+// Untuk Saat Ini, Kita Akan Menggunakan Data Dummy yang Diimpor
     const loadProfilingData = async () => {
       try {
-        // This would be replaced with an actual API call in production
-        // const response = await fetch('/api/profiling');
-        // const data = await response.json();
+        // Ini akan digantikan dengan panggilan API yang sebenarnya dalam produksi
+        // const respons = tunggu pengambilan('/api/profiling'); 
+        // const data = tunggu respons.json();
         setProfilingData([
           {
             "_id": "profiling-01",
@@ -505,7 +505,7 @@ function App() {
     dashboardPage * itemsPerPage
   );
 
-  const grafikData = dataHistoriesAi
+  const grafikData = combinedDashboardData
     .filter(item =>
       item.guid_device === selectedPhoto?.guid_device && // Filter berdasarkan guid_device yang dipilih
       (
@@ -521,7 +521,7 @@ function App() {
     }));
 
   const grafikMood = Object.entries(
-    dataHistoriesAi
+    combinedDashboardData
       .filter(item =>
         item.guid_device === selectedPhoto?.guid_device && // Filter berdasarkan guid_device yang dipilih
         (
@@ -529,6 +529,7 @@ function App() {
           item.datetime?.slice(0, 10).includes(searchGrafik) ||
           item.datetime?.slice(0, 7).includes(searchGrafik)
         )
+      )
       .reduce((acc, curr) => {
         let mood = (curr.mood || "").toLowerCase();
         if (mood === "senang") mood = "bahagia";
@@ -536,7 +537,7 @@ function App() {
         acc[mood] = (acc[mood] || 0) + 1;
         return acc;
       }, {})
-  ).map(([mood, count]) => ({ mood, count })));
+  ).map(([mood, count]) => ({ mood, count }));
 
   return (
     <div className="p-4">
@@ -1187,7 +1188,7 @@ function App() {
       )}
 
       {/* Modal Detail Dashboard*/}
-      {selectedPhoto && tab === "dashboard" && (
+      {selectedPhoto && (tab === "dashboard" || tab === "ai") && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <h2 className="text-xl font-bold mb-4">Detail Grafik - {selectedPhoto.nama || selectedPhoto.guid_device}</h2>
@@ -1267,7 +1268,7 @@ function App() {
               </div>
             </div>
 
-            {/* Tambahkan setelah section filter dan sebelum tabel */}
+            {/* Detail Filter Tanggal/Hari / Bulan / Tahun */}
             <div className="mb-4 p-3 bg-blue-50 rounded text-sm">
               {detailFilter.tanggal_hari && (
                 <span className="inline-block mr-3">
