@@ -1010,6 +1010,10 @@ function App() {
                         />
                         <p><strong>Nama:</strong> {data.nama}</p>
                         <p><strong>Tanggal:</strong> {data.datetime?.slice(0, 10)}</p>
+                        <p><strong>Masuk :</strong> {data.jam_masuk_actual}</p>
+                        <p><strong>Keluar :</strong> {data.jam_keluar_actual}</p>
+                        <p><strong>Telat :</strong> {data.jumlah_telat}</p>
+                        <p><strong>Status Kehadiran:</strong> {data.status_absen}</p>
                         <p><strong>Keletihan:</strong> {data.keletihan}%</p>
                         <p>
                           <strong>Suasana Hati:</strong>{" "}
@@ -1093,6 +1097,8 @@ function App() {
           )}
         </>
       )}
+
+
 
       {/* Modal Detail untuk Edit di Tab AI*/}
       {selectedPhoto && tab === "ai" && (
@@ -1414,6 +1420,7 @@ function App() {
                           <Cell 
                             key={`cell-${index}`}
                             fill={
+                              mood === 'Senang' ? '#22c55e' :
                               mood === 'Bahagia' ? '#22c55e' :
                               mood === 'Sedih' ? '#facc15' :
                               mood === 'Marah' ? '#ef4444' :

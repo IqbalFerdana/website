@@ -1440,3 +1440,20 @@ const DetailItem = ({ label, value }) => (
 );
 
 export default App;
+
+
+              // NAVIGASI HALAMAN SEBELUMNYA 1 2 3 4 5 SELANJUTNYA //
+              <div className="flex flex-col items-center mt-6 gap-2">
+                <div className="flex gap-2">
+                  <button onClick={() => setPage((prev) => Math.max(prev - 1, 1))} disabled={page === 1} className="px-3 py-1 rounded border bg-white">Sebelumnya</button>
+                  {[1, 2, 3, 4, 5].map((p) => (
+                    <button key={p} onClick={() => setPage(p)} className={`px-3 py-1 rounded border ${page === p ? "bg-blue-600 text-white" : "bg-white"}`}>{p}</button>
+              ))}
+                   <button onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))} disabled={page === totalPages} className="px-3 py-1 rounded border bg-white">Berikutnya</button>
+            </div>
+            <p className="text-sm text-gray-500">Halaman {page} dari {totalPages}</p>
+          </div>
+            </>
+          )}
+        </>
+      )}

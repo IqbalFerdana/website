@@ -1,11 +1,11 @@
 import axios from "axios";
 
 const api = axios.create({
-   baseURL: "https://api-human-detection.pptik.id/",
+   baseURL: "http://localhost:4000",
 })
 
 const apiLocal = axios.create({
-   baseURL: "https://api-human-detection.pptik.id/",
+   baseURL: "http://localhost:4000",
 })
 
 // GET semua data dari semua halaman (misal 5 halaman)
@@ -18,7 +18,7 @@ export const getAllCameraHistory = async (totalPages = 5) => {
     let allData = [];
 
     for (let page = 1; page <= totalPages; page++) {
-    const response = await api.get("/history_ai/get/page1", { params: { page } });
+    const response = await api.get("/history_ai/get?page=1", { params: { page } });
     if (response.data && response.data.data) {
         allData = allData.contat(response.data.data);
     }
@@ -27,8 +27,8 @@ export const getAllCameraHistory = async (totalPages = 5) => {
     return allData;
 }
 
-export const getAllCameraHistories = async (totalPages = 5) => {
-    const response = await apiLocal.get("/history_ai/get", { params: { page: totalPages } });
+export const getAllCameraHistories = async () => {
+    const response = await apiLocal.get("/history_ai/get",  );
     return response.data.data
 }
 
@@ -61,3 +61,5 @@ export const fetchPhotos = async () => {
     const response = await api.get("/api/photos");
     return response.data;
 };
+
+
